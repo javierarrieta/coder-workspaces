@@ -7,7 +7,7 @@
     in
     {
       packages.x86_64-linux.default = import ./image.nix { inherit pkgs; };
-      packages.x86_64-linux.coder-workspace = self.packages.x86_64-linux.default;
+      packages.x86_64-linux.coder-workspaces-nix = self.packages.x86_64-linux.default;
       formatter.x86_64-linux = pkgs.nixfmt-tree;
     };
 }

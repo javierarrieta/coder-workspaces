@@ -2,14 +2,14 @@
 
 Nix-built Coder workspace container images.
 
-## Current image: coder-workspace
+## Current image: coder-workspaces-nix
 
-`ghcr.io/javierarrieta/coder-workspace` — immutable tags `YYYYMMDD-<short-sha>`
+`ghcr.io/javierarrieta/coder-workspaces-nix` — immutable tags `YYYYMMDD-<short-sha>`
 plus `latest` (see IMAGE_TAGS.md).
 
 ## Build locally
 
-    nix build .#coder-workspace
+    nix build .#coder-workspaces-nix
 
 ## Publish
 
@@ -19,5 +19,5 @@ Pushes to `main` touching `image.nix`, `flake.lock`, or
 ## Consume
 
 The `coder-templates` repo's `llm01-podman` template pins `workspace_image`.
-Repoint it to `ghcr.io/javierarrieta/coder-workspace:<tag>`. Cluster pulls
+Repoint it to `ghcr.io/javierarrieta/coder-workspaces-nix:<tag>`. Cluster pulls
 need the GHCR image public-readable (or `registry_auth` in the template).

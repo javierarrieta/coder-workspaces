@@ -26,7 +26,7 @@ jobs:
 
       - name: Build image
         run: |
-          nix build .#coder-workspace \
+          nix build .#coder-workspaces-nix \
             --option system-features "benchmark big-parallel kvm nixos-test uid-range"
 
       - name: Compute tag
@@ -40,14 +40,14 @@ jobs:
       - name: Load and tag
         run: |
           docker load -i result
-          docker tag coder-workspace:pinned ghcr.io/javierarrieta/coder-workspace:${{ steps.tag.outputs.tag }}
-          docker tag ghcr.io/javierarrieta/coder-workspace:${{ steps.tag.outputs.tag }} ghcr.io/javierarrieta/coder-workspace:latest
+          docker tag coder-workspace:pinned ghcr.io/javierarrieta/coder-workspaces-nix:${{ steps.tag.outputs.tag }}
+          docker tag ghcr.io/javierarrieta/coder-workspaces-nix:${{ steps.tag.outputs.tag }} ghcr.io/javierarrieta/coder-workspaces-nix:latest
 
       - name: Push to GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/javierarrieta/coder-workspace:${{ steps.tag.outputs.tag }}
-          docker push ghcr.io/javierarrieta/coder-workspace:latest
+          docker push ghcr.io/javierarrieta/coder-workspaces-nix:${{ steps.tag.outputs.tag }}
+          docker push ghcr.io/javierarrieta/coder-workspaces-nix:latest
 
       - name: Record tag in IMAGE_TAGS.md
         run: |
