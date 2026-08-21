@@ -192,13 +192,19 @@ pkgs.dockerTools.buildImage {
     sandbox = false
     experimental-features = nix-command flakes
     EOF
+    # Passwordless chown for the workspace user: /nix lives on a read-only
+    # virtiofs share during image build, so ownership cannot be changed here
+    # (any chown crashes the builder VM). The template's startup script uses
+    # this to grant store-dir writability at container start instead.
+    echo 'coder ALL=(root) NOPASSWD: /bin/chown' > /etc/sudoers.d/coder
+    chmod 0440 /etc/sudoers.d/coder
    '';
   # Store contents are appended to the layer as root:0 at final image
   # assembly, so /nix/store ends up root-owned and read-only for the
   # workspace user. Writability for home-manager switches is granted at
-  # container start by the template's root init container (see
-  # coder-templates podman-template main.tf), not here: chown inside this
-  # build crashes the CI builder VM.
+  # container start via the sudoers rule above (see coder-templates
+  # podman-template main.tf), not here: chown inside this build crashes the
+  # CI builder VM.
   extraCommands = "";
   config = {
     User = "1000:1000";
