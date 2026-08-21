@@ -192,14 +192,17 @@ pkgs.dockerTools.buildImage {
     sandbox = false
     experimental-features = nix-command flakes
     EOF
-    # Single-user nix: HM switch must write new store paths as uid 1000.
-    # Store contents are re-fetched per switch; dies on workspace recreate,
-    # which is acceptable (only /home/coder persists).
-    chown -R 1000:1000 /nix
+    # Single-user nix: HM switch must create new store paths as uid 1000.
+    # Only the store DIRS need ownership — new derivations are fresh entries
+    # under /nix/store; existing package contents stay root-owned read-only.
+    # A recursive chown here copy-ups every store file in the build VM's
+    # overlay and kills the builder (observed 2026-08-21).
+    chown 1000:1000 /nix /nix/store /nix/var/nix
+    chown -R 1000:1000 /nix/var/nix/db /nix/var/nix/profiles /nix/var/nix/daemon-socket 2>/dev/null || true
   '';
   # Store contents are appended to the layer as root:0 at final image
-  # assembly, so /nix/store ends up root-owned. Making single-user Nix fully
-  # writable is deferred; nix is present for CLI use.
+  # assembly, so /nix/store contents end up root-owned; the store and var
+  # DIRS are chowned above so uid 1000 can add new paths.
   extraCommands = "";
   config = {
     User = "1000:1000";
