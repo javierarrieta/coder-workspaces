@@ -71,6 +71,7 @@ pkgs.dockerTools.buildImage {
       file
       tree
       nix
+      home-manager
       fish
       rustc
       cargo
@@ -182,6 +183,10 @@ pkgs.dockerTools.buildImage {
     sandbox = false
     experimental-features = nix-command flakes
     EOF
+    # Single-user nix: HM switch must write new store paths as uid 1000.
+    # Store contents are re-fetched per switch; dies on workspace recreate,
+    # which is acceptable (only /home/coder persists).
+    chown -R 1000:1000 /nix
   '';
   # Store contents are appended to the layer as root:0 at final image
   # assembly, so /nix/store ends up root-owned. Making single-user Nix fully
@@ -191,7 +196,7 @@ pkgs.dockerTools.buildImage {
     User = "1000:1000";
     WorkingDir = "/home/coder";
     Env = [
-      "PATH=/bin:/usr/bin:/home/coder/.cargo/bin:/home/coder/.local/bin:/home/coder/.bun/bin"
+      "PATH=/home/coder/.nix-profile/bin:/bin:/usr/bin:/home/coder/.cargo/bin:/home/coder/.local/bin:/home/coder/.bun/bin"
       "HOME=/home/coder"
       "SHELL=/bin/bash"
       "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
