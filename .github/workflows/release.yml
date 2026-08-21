@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v14
+
+      - name: Enable Nix store cache
+        uses: DeterminateSystems/magic-nix-cache-action@v14
+
+      - name: Build image
+        run: nix build .#coder-workspaces-nix
+
+      - name: Load image to Docker
+        run: docker load -i result
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#v}
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Invalid release tag '$TAG'. Expected semver MAJOR.MINOR.PATCH (e.g. v1.2.3)."
+            exit 1
+          fi
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "major=$MAJOR" >> $GITHUB_OUTPUT
+          echo "minor=$MINOR" >> $GITHUB_OUTPUT
+          echo "patch=$PATCH" >> $GITHUB_OUTPUT
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Tag and push images
+        env:
+          REGISTRY: ghcr.io/javierarrieta/coder-workspaces-nix
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          MAJOR=${{ steps.version.outputs.major }}
+          MINOR=${{ steps.version.outputs.minor }}
+          PATCH=${{ steps.version.outputs.patch }}
+
+          TAGS=(
+            "v$VERSION"
+            "$VERSION"
+            "v$MAJOR.$MINOR"
+            "$MAJOR.$MINOR"
+            "v$MAJOR"
+            "$MAJOR"
+            "latest"
+          )
+
+          for tag in "${TAGS[@]}"; do
+            docker tag coder-workspaces-nix:pinned "$REGISTRY:$tag"
+            docker push "$REGISTRY:$tag"
+          done

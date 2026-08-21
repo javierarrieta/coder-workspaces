@@ -4,8 +4,7 @@ Nix-built Coder workspace container images.
 
 ## Current image: coder-workspaces-nix
 
-`ghcr.io/javierarrieta/coder-workspaces-nix` — immutable tags `YYYYMMDD-<short-sha>`
-plus `latest` (see IMAGE_TAGS.md).
+`ghcr.io/javierarrieta/coder-workspaces-nix` — semver tags (e.g., `v1.2.3`, `1.2.3`, `latest`) — see GitHub Releases for history.
 
 ## Build locally
 
@@ -13,8 +12,8 @@ plus `latest` (see IMAGE_TAGS.md).
 
 ## Publish
 
-Pushes to `main` touching `image.nix`, `flake.lock`, or
-`.github/workflows/build.yml` trigger a GHCR push (GitHub Actions).
+Create a GitHub Release on a semver tag (e.g., `v1.2.3`) to publish the image
+to GHCR with matching semver tags and `latest`.
 
 ## Consume
 
