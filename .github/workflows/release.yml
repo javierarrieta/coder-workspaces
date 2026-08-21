@@ -39,6 +39,9 @@ jobs:
           echo "minor=$MINOR" >> $GITHUB_OUTPUT
           echo "patch=$PATCH" >> $GITHUB_OUTPUT
 
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
       - name: Tag and push images
         env:
           REGISTRY: ghcr.io/javierarrieta/coder-workspaces-nix
