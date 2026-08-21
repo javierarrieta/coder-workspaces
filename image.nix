@@ -192,14 +192,13 @@ pkgs.dockerTools.buildImage {
     sandbox = false
     experimental-features = nix-command flakes
     EOF
-    # Single-user nix: HM switch must write new store paths as uid 1000.
-    # Store contents are re-fetched per switch; dies on workspace recreate,
-    # which is acceptable (only /home/coder persists).
-    chown -R 1000:1000 /nix
-  '';
+   '';
   # Store contents are appended to the layer as root:0 at final image
-  # assembly, so /nix/store ends up root-owned. Making single-user Nix fully
-  # writable is deferred; nix is present for CLI use.
+  # assembly, so /nix/store ends up root-owned and read-only for the
+  # workspace user. Writability for home-manager switches is granted at
+  # container start by the template's root init container (see
+  # coder-templates podman-template main.tf), not here: chown inside this
+  # build crashes the CI builder VM.
   extraCommands = "";
   config = {
     User = "1000:1000";
