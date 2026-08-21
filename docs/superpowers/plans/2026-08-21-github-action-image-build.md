@@ -145,7 +145,7 @@ jobs:
           )
 
           for tag in "${TAGS[@]}"; do
-            docker tag coder-workspaces-nix "$REGISTRY:$tag"
+            docker tag coder-workspaces-nix:pinned "$REGISTRY:$tag"
             docker push "$REGISTRY:$tag"
           done
 ```

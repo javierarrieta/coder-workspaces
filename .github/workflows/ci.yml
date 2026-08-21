@@ -23,5 +23,8 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v14
 
+      - name: Enable Nix store cache
+        uses: DeterminateSystems/magic-nix-cache-action@v14
+
       - name: Build image
         run: nix build .#coder-workspaces-nix

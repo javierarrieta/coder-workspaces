@@ -30,7 +30,7 @@ let
   });
 in
 pkgs.dockerTools.buildImage {
-  name = "coder-workspace";
+  name = "coder-workspaces-nix";
   tag = "pinned";
   copyToRoot = pkgs.buildEnv {
     name = "coder-workspace-root";
