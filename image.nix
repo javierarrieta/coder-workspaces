@@ -1,32 +1,8 @@
 { pkgs }:
 let
-  # fish's compiled $__fish_sysconf_dir points at the package's store-path
-  # etc/fish (not /etc/fish), so bake the global config into the package.
+  # tests fail in the container build env (indent/cd/path check scripts)
   fish = pkgs.fish.overrideAttrs (old: {
-    # tests fail in the container build env (indent/cd/path check scripts)
     doCheck = false;
-    postInstall = (old.postInstall or "") + ''
-      mkdir -p $out/etc/fish/conf.d
-      cat > $out/etc/fish/conf.d/00-coder-workspace.fish <<'EOF'
-      if status is-interactive
-        alias ls="eza --icons"
-        alias ll="eza -l --icons"
-        alias la="eza -la --icons"
-        alias cat="bat --paging=never"
-        alias rg="rg --hidden"
-        alias diff="diff --color"
-        if command -s zoxide > /dev/null
-          zoxide init fish | source
-        end
-        if command -s fzf > /dev/null
-          fzf --fish | source
-        end
-        if command -s direnv > /dev/null
-          direnv hook fish | source
-        end
-      end
-      EOF
-    '';
   });
 in
 pkgs.dockerTools.buildImage {
@@ -58,7 +34,7 @@ pkgs.dockerTools.buildImage {
       openssh
       rsync
       sudo
-      python3
+      python312
       ripgrep
       fd
       jq
@@ -73,7 +49,10 @@ pkgs.dockerTools.buildImage {
       nix
       home-manager
       fish
-      # Rust toolchain comes via rustup (home-manager), not baked in.
+      rustc
+      cargo
+      rustfmt
+      clippy
       uv
       bun
       gh
@@ -85,6 +64,7 @@ pkgs.dockerTools.buildImage {
       eza
       tmux
       procps
+      util-linux
       psmisc
       patch
       man-db
@@ -103,7 +83,24 @@ pkgs.dockerTools.buildImage {
       go
       skopeo
       kubectl
-      # nodejs comes via home-manager (nodejs_24), not baked in.
+      starship
+      btop
+      lsd
+      difftastic
+      dyff
+      fastfetch
+      kubernetes-helm
+      scala-cli
+      kubectx
+      k9s
+      # python312Packages.pipenv does not exist on this nixpkgs rev;
+      # top-level pipenv tracks the default python.
+      pipenv
+      python312Packages.virtualenv
+      python312Packages.pylint
+      python312Packages.oci
+      python312Packages.huggingface-hub
+      nodejs_24
     ];
     pathsToLink = [
       "/bin"
@@ -189,19 +186,15 @@ pkgs.dockerTools.buildImage {
     sandbox = false
     experimental-features = nix-command flakes
     EOF
-    # Passwordless chown for the workspace user: /nix lives on a read-only
-    # virtiofs share during image build, so ownership cannot be changed here
-    # (any chown crashes the builder VM). The template's startup script uses
-    # this to grant store-dir writability at container start instead.
-    echo 'coder ALL=(root) NOPASSWD: /bin/chown' > /etc/sudoers.d/coder
-    chmod 0440 /etc/sudoers.d/coder
+    # nix verifies TLS against the standard path, not SSL_CERT_FILE.
+    ln -sfn /etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
+    # nix needs a writable var dir (db, profiles); /nix/store stays untouched.
+    mkdir -p /nix/var/nix
    '';
-  # Store contents are appended to the layer as root:0 at final image
-  # assembly, so /nix/store ends up root-owned and read-only for the
-  # workspace user. Writability for home-manager switches is granted at
-  # container start via the sudoers rule above (see coder-templates
-  # podman-template main.tf), not here: chown inside this build crashes the
-  # CI builder VM.
+  # /nix/store ends up root-owned and read-only for the workspace user.
+  # Writability for home-manager switches is not needed: HM is used
+  # config-only against a writable profile under /nix/var/nix, and no chown
+  # happens inside this build (it crashes the CI builder VM).
   extraCommands = "";
   config = {
     User = "1000:1000";
