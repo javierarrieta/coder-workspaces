@@ -16,6 +16,12 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    
+    # 1. This block replaces the need for a manually configured token
+    permissions:
+      id-token: write     # Required for FlakeHub JWT authentication
+      contents: read       # Required to checkout code
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
