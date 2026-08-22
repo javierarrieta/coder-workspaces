@@ -188,8 +188,10 @@ pkgs.dockerTools.buildImage {
     EOF
     # nix verifies TLS against the standard path, not SSL_CERT_FILE.
     ln -sfn /etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
-    # nix needs a writable var dir (db, profiles); /nix/store stays untouched.
-    mkdir -p /nix/var/nix
+    # NOTE: /nix/var/nix is NOT created here — re-emitting a path under the
+    # existing /nix dir in runAsRoot produces a duplicate entry in the layer
+    # tar and `docker load` rejects it ("duplicates of file paths not
+    # supported"). The template's root-phase startup creates it instead.
    '';
   # /nix/store ends up root-owned and read-only for the workspace user.
   # Writability for home-manager switches is not needed: HM is used
