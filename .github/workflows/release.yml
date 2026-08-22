@@ -12,11 +12,6 @@ jobs:
   release:
     runs-on: ubuntu-latest
 
-    # 1. This block replaces the need for a manually configured token
-    permissions:
-      id-token: write     # Required for FlakeHub JWT authentication
-      contents: read       # Required to checkout code
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,6 +23,8 @@ jobs:
 
       - name: Enable Nix store cache
         uses: DeterminateSystems/magic-nix-cache-action@v14
+        with:
+          use-gha-cache: true
 
       - name: Build image
         run: nix build .#coder-workspaces-nix
