@@ -73,10 +73,7 @@ pkgs.dockerTools.buildImage {
       nix
       home-manager
       fish
-      rustc
-      cargo
-      rustfmt
-      clippy
+      # Rust toolchain comes via rustup (home-manager), not baked in.
       uv
       bun
       gh
@@ -106,7 +103,7 @@ pkgs.dockerTools.buildImage {
       go
       skopeo
       kubectl
-      nodejs
+      # nodejs comes via home-manager (nodejs_24), not baked in.
     ];
     pathsToLink = [
       "/bin"
