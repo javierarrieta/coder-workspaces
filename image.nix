@@ -13,6 +13,7 @@ pkgs.dockerTools.buildImage {
     paths = with pkgs; [
       bash
       bashInteractive
+      zsh
       coreutils
       git
       curl
@@ -39,6 +40,7 @@ pkgs.dockerTools.buildImage {
       fd
       jq
       htop
+      ncdu
       less
       strace
       wget
