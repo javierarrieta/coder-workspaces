@@ -82,12 +82,20 @@ pkgs.dockerTools.buildImage {
       sqlite
       nixd
       nixfmt-tree
+      # Nix dev tooling: RFC 166 formatter, linters, build monitor, cache push,
+      # closure diff.
+      nixfmt-rfc-style
+      statix
+      deadnix
+      nix-output-monitor
+      cachix
+      nvd
       go
       skopeo
       kubectl
+      # Shell prompt
       starship
       btop
-      lsd
       difftastic
       dyff
       fastfetch
@@ -95,6 +103,7 @@ pkgs.dockerTools.buildImage {
       scala-cli
       kubectx
       k9s
+      opentofu
       # python312Packages.pipenv does not exist on this nixpkgs rev;
       # top-level pipenv tracks the default python.
       pipenv
@@ -103,6 +112,32 @@ pkgs.dockerTools.buildImage {
       python312Packages.oci
       python312Packages.huggingface-hub
       nodejs_24
+      # Git UX
+      lazygit
+      delta
+      # Shell: synced history
+      atuin
+      # Task runner + file watchers
+      just
+      watchexec
+      entr
+      # Network / HTTP client tools
+      xh
+      httpie
+      socat
+      mtr
+      # Sys monitoring / disk usage
+      duf
+      dust
+      procs
+      # Misc dev CLI
+      yq
+      fx
+      hyperfine
+      tokei
+      tldr
+      glab
+      helix
     ];
     pathsToLink = [
       "/bin"
