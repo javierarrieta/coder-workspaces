@@ -112,6 +112,7 @@ pkgs.dockerTools.buildImage {
       python312Packages.oci
       python312Packages.huggingface-hub
       nodejs_24
+      codex
       # Git UX
       lazygit
       delta
