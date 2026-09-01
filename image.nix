@@ -4,6 +4,26 @@ let
   fish = pkgs.fish.overrideAttrs (old: {
     doCheck = false;
   });
+
+  # nixpkgs-unstable (this flake's input) ships bun 1.3.13; bun 1.4.0 is newer.
+  # Prefer the official prebuilt binary over rebuilding from source. NOTE: the
+  # release-asset download can be non-deterministic across environments (a
+  # fixed-output hash is therefore environment-specific). If a build reports a
+  # `hash mismatch ... got: sha256-…`, paste that value in here and rebuild.
+  bun = pkgs.stdenvNoCC.mkDerivation {
+    name = "bun";
+    dontUnpack = true;
+    buildInputs = [ pkgs.unzip ];
+    installPhase = ''
+      mkdir -p $out/bin
+      unzip -j "${pkgs.fetchurl {
+        url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.0/bun-linux-x64.zip";
+        hash = "sha256-LQP7X7g6yLVnrKCigbLOGhoZ1Ij1bClo2Iw/Jekv5FI=";
+      }}" "bun-linux-x64/bun"
+      chmod +x bun
+      mv bun $out/bin/bun
+    '';
+  };
 in
 pkgs.dockerTools.buildImage {
   name = "coder-workspaces-nix";
