@@ -211,12 +211,12 @@ pkgs.dockerTools.buildImage {
     # openssl: VS Code's vsce-sign extension-signature verifier dlopens
     # libssl at crypto time and SIGABRTs with "No usable version of libssl
     # was found" if absent.
-    ln -sfn ${pkgs.openssl}/lib/libssl.so.3 /lib64/libssl.so.3
-    ln -sfn ${pkgs.openssl}/lib/libssl.so.3 /usr/lib/libssl.so.3
-    ln -sfn ${pkgs.openssl}/lib/libssl.so.3 /usr/lib64/libssl.so.3
-    ln -sfn ${pkgs.openssl}/lib/libcrypto.so.3 /lib64/libcrypto.so.3
-    ln -sfn ${pkgs.openssl}/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3
-    ln -sfn ${pkgs.openssl}/lib/libcrypto.so.3 /usr/lib64/libcrypto.so.3
+    ln -sfn ${pkgs.openssl.out}/lib/libssl.so.3 /lib64/libssl.so.3
+    ln -sfn ${pkgs.openssl.out}/lib/libssl.so.3 /usr/lib/libssl.so.3
+    ln -sfn ${pkgs.openssl.out}/lib/libssl.so.3 /usr/lib64/libssl.so.3
+    ln -sfn ${pkgs.openssl.out}/lib/libcrypto.so.3 /lib64/libcrypto.so.3
+    ln -sfn ${pkgs.openssl.out}/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3
+    ln -sfn ${pkgs.openssl.out}/lib/libcrypto.so.3 /usr/lib64/libcrypto.so.3
     # 'sh' shebang needs /usr/bin/env; VS Code CLI's GNU prereq probes need
     # ldd and /sbin/ldconfig.
     ln -sfn ${pkgs.coreutils}/bin/env /usr/bin/env
