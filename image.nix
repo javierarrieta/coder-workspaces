@@ -85,6 +85,10 @@ pkgs.dockerTools.buildImage {
       bat
       eza
       tmux
+      # Terminal workspace manager for AI coding agents (herdr.dev). Ships in
+      # nixos-unstable (0.9.1 == latest upstream tag) and is substituted from
+      # cache.nixos.org, so no local prebuilt override is needed.
+      herdr
       procps
       util-linux
       psmisc
@@ -160,9 +164,12 @@ pkgs.dockerTools.buildImage {
       glab
       helix
     ];
+    # /share is linked so packages' shipped shell completions (herdr's fish/zsh/bash
+    # completions, etc.) and other share/ data are reachable in the image.
     pathsToLink = [
       "/bin"
       "/etc"
+      "/share"
     ];
   };
   runAsRoot = ''
