@@ -117,6 +117,14 @@ pkgs.dockerTools.buildImage {
       go
       skopeo
       kubectl
+      # Rootless containers *inside* the workspace (podman run postgres:18 for a
+      # test database, for example). nixpkgs' podman wrapper already carries
+      # conmon, crun, netavark, aardvark-dns and passt, so no extra network
+      # package is needed. `shadow` supplies newuidmap/newgidmap, which the
+      # runAsRoot block below re-installs setuid — the store copy is 0755 and
+      # rootless podman cannot build a multi-id user namespace without it.
+      podman
+      shadow
       # Shell prompt
       starship
       btop
@@ -246,6 +254,43 @@ pkgs.dockerTools.buildImage {
     chmod 1777 /tmp /run
     chmod 0755 /home/coder
     chown 1000:1000 /home/coder
+    # Rootless podman. Three things it cannot supply for itself, all measured
+    # rather than assumed:
+    #   * /etc/subuid and /etc/subgid do not exist in this image at all, and
+    #     without a range for the user, unpacking any real image dies with
+    #     "potentially insufficient UIDs or GIDs available in user namespace
+    #     (requested 0:42 for /etc/shadow)".
+    #   * nixpkgs ships newuidmap/newgidmap at 0755. They must be setuid-root
+    #     for a non-root user to claim a subordinate id range, so they are
+    #     copied out of the read-only store and given the bit here.
+    #   * /run/user/1000 (XDG_RUNTIME_DIR) is normally made by logind, and there
+    #     is no logind in a container.
+    echo 'coder:100000:65536' >> /etc/subuid
+    echo 'coder:100000:65536' >> /etc/subgid
+    cp ${pkgs.shadow}/bin/newuidmap /usr/bin/newuidmap
+    cp ${pkgs.shadow}/bin/newgidmap /usr/bin/newgidmap
+    chmod 4755 /usr/bin/newuidmap
+    chmod 4755 /usr/bin/newgidmap
+    mkdir -p /run/user/1000
+    chown 1000:1000 /run/user/1000
+    chmod 0700 /run/user/1000
+    # Storage driver and cgroup manager are baked in rather than left to
+    # autodetection, because the defaults are wrong for this pod specifically:
+    # the workspace container has no CAP_SYS_ADMIN and '/' is not a shared
+    # mount, so overlay/fuse storage cannot mount (there is no /dev/fuse either)
+    # and the cgroup manager cannot delegate. vfs copies instead of mounting —
+    # slower and hungrier on disk, and fine for a single long-lived database
+    # container, which is the only thing this is for.
+    mkdir -p /etc/containers
+    cat > /etc/containers/storage.conf <<'EOF'
+    [storage]
+    driver = "vfs"
+    EOF
+    cat > /etc/containers/containers.conf <<'EOF'
+    [engine]
+    cgroup_manager = "cgroupfs"
+    events_backend = "none"
+    EOF
     mkdir -p /etc/nix
     cat > /etc/nix/nix.conf <<'EOF'
     sandbox = false
@@ -272,6 +317,7 @@ pkgs.dockerTools.buildImage {
       "SHELL=/bin/bash"
       "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
       "LD_LIBRARY_PATH=/lib64:/usr/lib64:/usr/lib"
+      "XDG_RUNTIME_DIR=/run/user/1000"
     ];
     Cmd = [ "/bin/sh" ];
   };
