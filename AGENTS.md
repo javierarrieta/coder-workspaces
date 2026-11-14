@@ -180,6 +180,36 @@ and `docker load` rejects it ("duplicates of file paths not supported"). The
 container's startup script (written in the template's `command`) creates
 `/nix/var/nix` at runtime and `chown`s it to uid 1000.
 
+### Rootless podman (containers inside the workspace)
+
+`podman` is in the image so a workspace can run its own containers — the use case
+is a throwaway `postgres:18` for tests, matching the CI service container. It runs
+**rootless**, and three things it cannot supply for itself are baked in:
+
+| What | Where | Why it is not automatic |
+| --- | --- | --- |
+| `/etc/subuid`, `/etc/subgid` (`coder:100000:65536`) | `runAsRoot` | Absent entirely otherwise; image unpack then fails with `potentially insufficient UIDs or GIDs available in user namespace (requested 0:42 for /etc/shadow)` |
+| setuid `newuidmap` / `newgidmap` at `/usr/bin` | `runAsRoot` | nixpkgs ships them `0755` in a read-only store; a non-root user cannot claim a subid range without the bit |
+| `/run/user/1000` + `XDG_RUNTIME_DIR` | `runAsRoot` + `config.Env` | Normally created by logind; a container has no logind |
+
+Storage is pinned to **`vfs`** in `/etc/containers/storage.conf` and the cgroup
+manager to **`cgroupfs`** in `/etc/containers/containers.conf`. Not by taste: the
+workspace pod has no `CAP_SYS_ADMIN`, `/` is not a shared mount, and there is no
+`/dev/fuse`, so overlay and fuse-overlayfs cannot mount. `vfs` copies instead of
+mounting — slower and hungrier, and irrelevant for one long-lived database
+container. Do not switch the driver without re-checking those three conditions.
+
+Verify after a rebuild (from inside a workspace on the new image):
+
+```bash
+podman info --format '{{.Store.GraphDriverName}}'   # expect: vfs
+podman run --rm docker.io/library/postgres:18 postgres --version
+```
+
+If the second fails on id mapping, check `cat /etc/subuid` names the *runtime*
+user and run `podman system migrate`. The template drops from root to uid 1000
+with `setpriv`, so the name in that file must match `id -un`.
+
 ### Container identity
 
 The image is built with:
